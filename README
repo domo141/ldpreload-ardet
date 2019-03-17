@@ -1,0 +1,38 @@
+
+Selectively create deterministic ar archives and libraries
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+without D/-D/U/-U
+
+
+GNU binutils ar and ranlib do not provide selective way to create
+deterministic archive without using D and -D command line options
+(respectively).
+
+(Binutils can be configured with --enable-deterministic-archives, but
+then the feature is on always by default. That may break some use
+cases, and may cause confusion due to unexpected results.)
+
+Just setting an environment variable to enable determinism would be
+very useful feature.
+
+But since we don't have such feature...
+
+The LD_PRELOAD "library" ldpreload-ardet.so provides such a feature by
+adding D to ar(1) argv[1] in one elf .init phase. In case of ranlib(1)
+ldpreload-ardet.so has to re-exec the process in order to add extra
+arguments to its execution.
+
+Executing `sh ldpreload-ardet.c` will build `$PWD/ldpreload-ardet.so`.
+
+Usage example: `LD_PRELOAD=$PWD/ldpreload-ardet.so ar example.ar *`
+
+The ./ardet.pl command line utility can be used to post-process
+already built ar archive to zero timestamp, uid and gid fields in it
+i.e. restore determinism in those parts.
+
+Checking whether ar or ranlib is run has some heuristics, in theory
+this could break execution of other command that just happens to end
+with -ar or -ranlib (but so far I have not seen such an executable).
+
+SPDX-License-Identifier: Artistic-2.0
