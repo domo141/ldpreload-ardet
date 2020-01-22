@@ -18,37 +18,53 @@
  *          All rights reserved
  *
  * Created: Thu 14 Mar 2019 22:42:26 +0200 too
- * Last modified: Sun 17 Mar 2019 20:34:55 +0200 too
+ * Last modified: Wed 22 Jan 2020 20:22:02 +0200 too
  */
 
 // SPDX-License-Identifier: Artistic-2.0
 
-#if 0 // change to '#if 1' whenever there is desire to see these...
-#pragma GCC diagnostic warning "-Wpadded"
-#pragma GCC diagnostic warning "-Wpedantic"
-#endif
 
-// gcc -dM -E -xc /dev/null | grep -i gnuc
-// clang -dM -E -xc /dev/null | grep -i gnuc
+// hint: gcc -dM -E -xc /dev/null | grep -i gnuc
+// also: clang -dM -E -xc /dev/null | grep -i gnuc
 #if defined (__GNUC__)
 
-// to relax, change 'error' to 'warning' -- or even 'ignored'
-// selectively. use #pragma GCC diagnostic push/pop to change
-// the rules temporarily
+#if 0 // use of -Wpadded gets complicated, 32 vs 64 bit systems
+#pragma GCC diagnostic warning "-Wpadded"
+#endif
+
+#if 1
+#if __GNUC__ >= 5
+#pragma GCC diagnostic warning "-Wsuggest-attribute=pure"
+#pragma GCC diagnostic warning "-Wsuggest-attribute=const"
+#pragma GCC diagnostic warning "-Wsuggest-attribute=noreturn"
+#pragma GCC diagnostic warning "-Wsuggest-attribute=format"
+#endif
+#endif
 
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 
+#if __GNUC__ >= 8 // impractically strict in gccs 5, 6 and 7
+#pragma GCC diagnostic error "-Wpedantic"
+#endif
+
 #if __GNUC__ >= 7
+// gcc manual says all kind of /* fall.*through */ regexp's work too
+// but perhaps only when cpp does not filter comments out. thus...
+#define FALL_THROUGH __attribute__ ((fallthrough))
+#else
+#define FALL_THROUGH ((void)0)
+#endif
 
-#pragma GCC diagnostic error "-Wimplicit-fallthrough"
-
-#endif /* __GNUC__ >= 7 */
-
+#ifndef __cplusplus
 #pragma GCC diagnostic error "-Wstrict-prototypes"
-#pragma GCC diagnostic error "-Winit-self"
+#pragma GCC diagnostic error "-Wbad-function-cast"
+#pragma GCC diagnostic error "-Wold-style-definition"
+#pragma GCC diagnostic error "-Wmissing-prototypes"
+#pragma GCC diagnostic error "-Wnested-externs"
+#endif
 
-// -Wformat=2 ¡currently! (2010-03) equivalent of the following 4
+// -Wformat=2 ¡currently! (2020-0202) equivalent of the following 4
 #pragma GCC diagnostic error "-Wformat"
 #pragma GCC diagnostic error "-Wformat-nonliteral"
 #pragma GCC diagnostic error "-Wformat-security"
@@ -61,23 +77,33 @@
 #pragma GCC diagnostic error "-Wshadow"
 #pragma GCC diagnostic error "-Wmissing-include-dirs"
 #pragma GCC diagnostic error "-Wundef"
-#pragma GCC diagnostic error "-Wbad-function-cast"
-#ifndef __clang__
-#pragma GCC diagnostic error "-Wlogical-op" // XXX ...
+
+#ifndef __clang__ // XXX revisit -- tried with clang 3.8.0
+#pragma GCC diagnostic error "-Wlogical-op"
 #endif
+
+#ifndef __cplusplus // supported by c++ compiler but perhaps not worth having
 #pragma GCC diagnostic error "-Waggregate-return"
-#pragma GCC diagnostic error "-Wold-style-definition"
-#pragma GCC diagnostic error "-Wmissing-prototypes"
+#endif
+
 #pragma GCC diagnostic error "-Wmissing-declarations"
 #pragma GCC diagnostic error "-Wredundant-decls"
-#pragma GCC diagnostic error "-Wnested-externs"
 #pragma GCC diagnostic error "-Winline"
 #pragma GCC diagnostic error "-Wvla"
 #pragma GCC diagnostic error "-Woverlength-strings"
+#pragma GCC diagnostic error "-Wuninitialized"
 
 //ragma GCC diagnostic error "-Wfloat-equal"
 //ragma GCC diagnostic error "-Werror"
 //ragma GCC diagnostic error "-Wconversion"
+
+// avoiding known problems (turning some settings set above to ignored)...
+#if __GNUC__ == 4
+#ifndef __clang__
+#pragma GCC diagnostic ignored "-Winline" // gcc 4.4.6 ...
+#pragma GCC diagnostic ignored "-Wuninitialized" // gcc 4.4.6, 4.8.5 ...
+#endif
+#endif
 
 #endif /* defined (__GNUC__) */
 
